@@ -34,7 +34,7 @@ class CUDA_build_ext(build_ext):
     def build_extensions(self):
         self.compiler.src_extensions.append('.cu')
         self.compiler.set_executable('compiler_so', 'nvcc')
-        self.compiler.set_executable('linker_so', 'nvcc --shared')
+        self.compiler.set_executable('linker_so', 'nvcc')
         if hasattr(self.compiler, '_c_extensions'):
             self.compiler._c_extensions.append('.cu')  # needed for Windows
         self.compiler.spawn = self.spawn
@@ -46,7 +46,7 @@ class CUDA_build_ext(build_ext):
         compile/link etc. commands.
         """
         if (sys.platform == 'darwin' and len(cmd) >= 2 and cmd[0] == 'nvcc' and
-                cmd[1] == '--shared' and cmd.count('-arch') > 0):
+                cmd[1] == '' and cmd.count('-arch') > 0):
             # Versions of distutils on OSX earlier than 2.7.9 inject
             # '-arch x86_64' which we need to strip while using nvcc for
             # linking
@@ -76,7 +76,7 @@ class CUDA_build_ext(build_ext):
                 # replace /c by -c
                 if c == '/c': cmd[idx] = '-c'
                 # replace /DLL by --shared
-                elif c == '/DLL': cmd[idx] = '--shared'
+                elif c == '/DLL': cmd[idx] = ''
                 # remove --compiler-options=-fPIC
                 elif '-fPIC' in c: del cmd[idx]
                 # replace /Tc... by ...
@@ -93,7 +93,7 @@ class CUDA_build_ext(build_ext):
                 elif c == 'cublas.lib': cmd[idx] = '-lcublas'
             # - Finally, we pass on all arguments starting with a '/' to the
             #   compiler or linker, and have nvcc handle all other arguments
-            if '--shared' in cmd:
+            if '' in cmd:
                 pass_on = '--linker-options='
                 # we only need MSVCRT for a .dll, remove CMT if it sneaks in:
                 cmd.append('/NODEFAULTLIB:libcmt.lib')
